@@ -10,21 +10,28 @@ const ViaOracle = artifacts.require('ViaOracle');
 const usingProvable = artifacts.require('usingProvable');
 const ERC20 = artifacts.require('ERC20');
 const Token = artifacts.require('Token');
+const { deployProxy } = require('@openzeppelin/truffle-upgrades');
 
-module.exports = function(deployer, network, accounts) {
-    
-    deployer.deploy(stringutils);
-    deployer.link(stringutils, [Bond, Cash, ViaOracle]);
+module.exports = async function(deployer, network, accounts) {
 
-    deployer.deploy(ABDKMathQuad);
-    deployer.link(ABDKMathQuad,[Cash, Bond, ViaOracle, ERC20, Token]);
+    await deployProxy(stringutils, {deployer});
+    // await deployer.deploy(stringutils);
+    await deployer.link(stringutils, [Bond, Cash, ViaOracle]);
 
-    deployer.deploy(ViaOracle, {from: accounts[0], gas:6721975, value: 0.25e18});
-    deployer.deploy(Cash);
-    deployer.deploy(Bond);
-    deployer.deploy(Token);
+    await deployProxy(ABDKMathQuad, {deployer});
+    // await deployer.deploy(ABDKMathQuad);
+    await deployer.link(ABDKMathQuad,[Cash, Bond, ViaOracle, ERC20, Token]);
 
-    deployer.deploy(Factory).then(async () => {
+    await deployer.deploy(ViaOracle, {from: accounts[0], gas:6721975, value: 0.25e18});
+
+    await deployProxy(Cash, {deployer});
+    // await deployer.deploy(Cash);
+    await deployProxy(Bond, {deployer});
+    // await deployer.deploy(Bond);
+    await deployProxy(Token, {deployer});
+    // await deployer.deploy(Token);
+
+    await deployer.deploy(Factory).then(async () => {
         const factory = await Factory.deployed();
         const cash = await Cash.deployed();
         const bond = await Bond.deployed();
