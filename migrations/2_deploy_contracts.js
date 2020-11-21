@@ -20,23 +20,49 @@ module.exports = async function(deployer, network, accounts) {
     await deployProxy(ABDKMathQuad, {deployer});
     await deployer.link(ABDKMathQuad,[Cash, Bond, ViaOracle, ERC20, Token]);
 
-    // this contract is not yet upgrade safe, see https://github.com/verified-network/via-issuer/issues/38#issuecomment-731461807 for more information
-    // await deployProxy(ViaOracle, {deployer});
-    // const oracleInstance = await ViaOracle.deployed();
-    // oracleInstance.sendTransaction({from:accounts[0], to: oracleInstance.address, value:  0.25e18})
+    /* probably dont need to deploy the oraclize contract as upgradable proxy
+    await deployProxy(
+        ViaOracle, 
+        {
+            "deployer": deployer, 
+            "initializer": false, 
+            "unsafeAllowCustomTypes": true, 
+            "unsafeAllowLinkedLibraries": true
+        }
+    );
+    const oracleInstance = await ViaOracle.deployed();
+    oracleInstance.sendTransaction({from:accounts[0], to: oracleInstance.address, value:  0.25e18})*/
     await deployer.deploy(ViaOracle, {from: accounts[0], gas:6721975, value: 0.25e18});
 
-    // this contract is not yet upgrade safe, see https://github.com/verified-network/via-issuer/issues/38#issuecomment-731461807 for more information
-    // await deployProxy(Cash, {deployer});
-    await deployer.deploy(Cash);
+    await deployProxy(
+        Cash, 
+        {
+            "deployer": deployer, 
+            "initializer": false, 
+            "unsafeAllowCustomTypes": true, 
+            "unsafeAllowLinkedLibraries": true
+        }
+    );
 
-    // this contract is not yet upgrade safe, see https://github.com/verified-network/via-issuer/issues/38#issuecomment-731461807 for more information
-    // await deployProxy(Bond, {deployer});
-    await deployer.deploy(Bond);
+    await deployProxy(
+        Bond, 
+        {
+            "deployer": deployer, 
+            "initializer": false, 
+            "unsafeAllowCustomTypes": true, 
+            "unsafeAllowLinkedLibraries": true
+        }
+    );
 
-    // this contract is not yet upgrade safe, see https://github.com/verified-network/via-issuer/issues/38#issuecomment-731461807 for more information
-    // await deployProxy(Token, {deployer});
-    await deployer.deploy(Token);
+    await deployProxy(
+        Token, 
+        {
+            "deployer": deployer, 
+            "initializer": false, 
+            "unsafeAllowCustomTypes": true, 
+            "unsafeAllowLinkedLibraries": true
+        }
+    );
 
     /* // this contract is not yet upgrade safe, see https://github.com/verified-network/via-issuer/issues/38#issuecomment-731461807 for more information
     await deployProxy(Factory, {deployer}).then(async () => {
