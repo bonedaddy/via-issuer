@@ -44,6 +44,9 @@ contract Bond is ViaBond, ERC20, Initializable, Ownable, Pausable {
     //forwarding token address
     address private forwarder;
 
+    //mutex
+    bool lock;
+
     //a Via bond has some value, corresponds to a fiat currency
     //can have many purchasers and a issuer that have agreed to a zero coupon rate which is the start price of the bond
     //and a tenure in unix timestamps of seconds counted from 1970-01-01. Via bonds are of one year tenure.
@@ -90,9 +93,6 @@ contract Bond is ViaBond, ERC20, Initializable, Ownable, Pausable {
     event ViaBondIssued(bytes32 currency, uint256 value, uint256 price, uint256 tenure);
     event ViaBondRedeemed(bytes32 currency, uint256 value, uint256 price, uint256 tenure);
 
-    //mutex
-    bool lock=false;
-
     //initiliaze proxies
     function initialize(bytes32 _name, bytes32 _type, address _owner, address _oracle, address _token) public initializer {
         Ownable.initialize(_owner);
@@ -104,6 +104,7 @@ contract Bond is ViaBond, ERC20, Initializable, Ownable, Pausable {
         bondName = _name;
         token = _token;
         decimals = 2;
+        lock = false;
     }
 
     //handling pay in of ether for issue of via bond tokens

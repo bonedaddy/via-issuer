@@ -33,7 +33,8 @@ contract Cash is ViaCash, ERC20, Initializable, Ownable, Pausable {
     string public name;
     string public symbol;
     bytes32 public cashtokenName;
-
+    //mutex
+    bool lock;
 
     //mapping of buyers (address) to currency (bytes32) to deposit (bytes16) amounts they make against which via cash tokens are issued
     mapping(address => mapping(bytes32 => bytes16)) public deposits;
@@ -58,9 +59,6 @@ contract Cash is ViaCash, ERC20, Initializable, Ownable, Pausable {
     event ViaCashRedeemed(bytes32 currency, bytes16 value);
     event LogCallback(bytes32 EthXid, bytes16 EthXvalue, bytes32 txId, bytes16 ViaXvalue);
 
-    //mutex
-    bool lock=false;
-
     //initiliaze proxies
     function initialize(bytes32 _name, bytes32 _type, address _owner, address _oracle, address _token) public initializer{
         Ownable.initialize(_owner);
@@ -70,6 +68,8 @@ contract Cash is ViaCash, ERC20, Initializable, Ownable, Pausable {
         name = string(abi.encodePacked(_name));
         symbol = string(abi.encodePacked(_type));
         cashtokenName = _name;
+        lock = false;
+        decimals = 2;
     }
 
     //handling pay in of ether for issue of via cash tokens

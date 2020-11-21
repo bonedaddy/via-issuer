@@ -14,8 +14,7 @@ contract ERC20{
     //address of the issuer of the Via, set once, never reset again
     address public issuer;
 
-    //allowing 2-floating points for Via tokens
-    uint8 public decimals=2;
+    uint8 public decimals;
     
     //variables
     bytes16 totalSupply_;
