@@ -61,9 +61,6 @@ contract Cash is ViaCash, ERC20, Initializable, Ownable, Pausable {
     event ViaCashRedeemed(bytes32 currency, bytes16 value);
     event LogCallback(bytes32 EthXid, bytes16 EthXvalue, bytes32 txId, bytes16 ViaXvalue);
 
-    //mutex
-    bool lock;
-
     //initiliaze proxies
     function initialize(bytes32 _name, bytes32 _type, address _owner, address _oracle, address _token) public initializer{
         Ownable.initialize(_owner);
