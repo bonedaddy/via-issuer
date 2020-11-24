@@ -5,15 +5,16 @@ pragma solidity >=0.5.0 <0.7.0;
 
 import "../abdk-libraries-solidity/ABDKMathQuad.sol";
 
-contract ERC20{
+contract ERC20 {
 
     using ABDKMathQuad for uint256;
     using ABDKMathQuad for int256;
     using ABDKMathQuad for bytes16;
 
     //address of the issuer of the Via, set once, never reset again
-    address public issuer;
+    address payable issuer;
 
+    //allowing 2-floating points for Via tokens
     uint8 public decimals;
     
     //variables
@@ -56,7 +57,7 @@ contract ERC20{
         return ABDKMathQuad.toUInt(allowed[tokenOwner][spender]);
     }
 
-    function transferFrom(address owner, address buyer, uint tokens) public returns (bool){
+    function transferFrom(address owner, address buyer, uint tokens) external returns (bool){
         require(ABDKMathQuad.cmp(ABDKMathQuad.fromUInt(tokens), balances[owner])==-1 ||
                 ABDKMathQuad.cmp(ABDKMathQuad.fromUInt(tokens), balances[owner])==0);
         //require(ABDKMathQuad.cmp(ABDKMathQuad.fromUInt(tokens), balances[owner])==0);

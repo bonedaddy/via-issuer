@@ -1,12 +1,15 @@
 // (c) Kallol Borah, 2020
 // Implementation of the Via cash and bond factory.
+// SPDX-License-Identifier: MIT
 
 pragma solidity >=0.5.0 <0.7.0;
 
 import "./interfaces/ViaFactory.sol";
+import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "@openzeppelin/upgrades/contracts/upgradeability/ProxyFactory.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/ownership/Ownable.sol";
 
-contract Factory is ViaFactory, ProxyFactory {
+contract Factory is ViaFactory, ProxyFactory, Initializable, Ownable {
 
     //data structure for token proxies
     struct via{
@@ -27,6 +30,10 @@ contract Factory is ViaFactory, ProxyFactory {
 
     event IssuerCreated(address indexed _address, bytes32 tokenName, bytes32 tokenType);
     event TokenCreated(address indexed _address, bytes32 tokenName, bytes32 tokenType);
+
+    function initialize() public initializer{
+        Ownable.initialize(msg.sender);
+    }
 
     function getTokenCount() external view returns(uint tokenCount) {
         return tokens.length;
@@ -85,10 +92,12 @@ contract Factory is ViaFactory, ProxyFactory {
         require(token[msg.sender].tokenType == "ViaBond");
         address _owner = msg.sender;
 
-        bytes memory _payload = abi.encodeWithSignature("initialize(bytes32,address,bytes32,bytes32)", tokenName, _owner, tokenProduct, tokenSymbol);
+        bytes memory _payload = abi.encodeWithSignature("initialize(address,bytes32,address,bytes32,bytes32)", address(this), tokenName, _owner, tokenProduct, tokenSymbol);
 
         // Deploy proxy
         address _token = deployMinimal(_target, _payload);
+        token[_token] = via("ViaBondToken", tokenName);
+        tokens.push(_token);
         products[tokenSymbol] = _token;       
         emit TokenCreated(_token, tokenName, tokenProduct);
         return _token;

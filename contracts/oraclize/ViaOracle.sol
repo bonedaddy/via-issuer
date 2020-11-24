@@ -1,5 +1,6 @@
 //(c) Kallol Borah, 2020
 // Via oracle client
+// SPDX-License-Identifier: MIT
 
 pragma solidity >=0.5.0 <0.7.0;
 
@@ -9,9 +10,11 @@ import "../utilities/StringUtils.sol";
 import "../interfaces/ViaFactory.sol";
 import "../interfaces/ViaCash.sol";
 import "../interfaces/ViaBond.sol";
+import "../interfaces/ViaCash.sol";
 import "../abdk-libraries-solidity/ABDKMathQuad.sol";
+import "@openzeppelin/upgrades/contracts/Initializable.sol";
 
-contract ViaOracle is Oracle, usingProvable {
+contract ViaOracle is Oracle, usingProvable, Initializable {
 
     using stringutils for *;
 
@@ -26,6 +29,7 @@ contract ViaOracle is Oracle, usingProvable {
         address payable caller;
         bytes32 tokenType;
         bytes32 rateType;
+        bytes32 callbackId;
     }
 
     uint constant CUSTOM_GASLIMIT = 500000;
@@ -45,7 +49,7 @@ contract ViaOracle is Oracle, usingProvable {
         provable_setCustomGasPrice(4000000000); // i.e. 4 GWei
     }
 
-    function initialize(address _factory) external {
+    function initialize(address _factory) external initializer{
         require(address(factory)==address(0x0));
         factory = ViaFactory(_factory);
     }                              
@@ -60,22 +64,27 @@ contract ViaOracle is Oracle, usingProvable {
         //to do : lines below throw error
         require(msg.sender == provable_cbAddress());
 
-        emit LogResult(pendingQueries[_myid].caller, _myid, pendingQueries[_myid].tokenType, pendingQueries[_myid].rateType, _result);
-        
-        if(pendingQueries[_myid].tokenType == "Cash"){
-            ViaCash(pendingQueries[_myid].caller).convert(_myid, ABDKMathQuad.fromUInt(_result.stringToUint()), pendingQueries[_myid].rateType);
-        }
-        else if(pendingQueries[_myid].tokenType == "Bond"){
-            ViaBond(pendingQueries[_myid].caller).convert(_myid, ABDKMathQuad.fromUInt(_result.stringToUint()), pendingQueries[_myid].rateType);
-        }
-        else if(pendingQueries[_myid].tokenType == "EthCash"){
-            ViaCash(pendingQueries[_myid].caller).convert(_myid, ABDKMathQuad.fromUInt(_result.stringToUint()), pendingQueries[_myid].rateType);
-        }
-        else if(pendingQueries[_myid].tokenType == "EthBond"){
-            ViaBond(pendingQueries[_myid].caller).convert(_myid, ABDKMathQuad.fromUInt(_result.stringToUint()), pendingQueries[_myid].rateType);
-        }
+        bytes32 callbackId = _myid;
+        params memory mpramas = pendingQueries[_myid];
+        delete pendingQueries[_myid];
 
-        delete pendingQueries[_myid]; 
+        if(mpramas.callbackId!="")
+            callbackId = mpramas.callbackId;
+
+        emit LogResult(mpramas.caller, callbackId, mpramas.tokenType, mpramas.rateType, _result);
+        
+        if(mpramas.tokenType == "Cash"){
+            ViaCash(mpramas.caller).convert(callbackId, ABDKMathQuad.fromUInt(_result.stringToUint()), mpramas.rateType);
+        }
+        else if(mpramas.tokenType == "Bond"){
+            ViaBond(mpramas.caller).convert(callbackId, ABDKMathQuad.fromUInt(_result.stringToUint()), mpramas.rateType);
+        }
+        else if(mpramas.tokenType == "EthCash"){
+            ViaCash(mpramas.caller).convert(callbackId, ABDKMathQuad.fromUInt(_result.stringToUint()), mpramas.rateType);
+        }
+        else if(mpramas.tokenType == "EthBond"){
+            ViaBond(mpramas.caller).convert(callbackId, ABDKMathQuad.fromUInt(_result.stringToUint()), mpramas.rateType);
+        }
     }
 
     function request(bytes32 _currency, bytes32 _ratetype, bytes32 _tokenType, address payable _tokenContract)
@@ -90,23 +99,29 @@ contract ViaOracle is Oracle, usingProvable {
             string memory currency = _currency.bytes32ToString();
             if(_ratetype == "er" || _ratetype == "ver"){
                 bytes32 queryId = provable_query("URL", string(abi.encodePacked("json(https://via-oracle.azurewebsites.net/rates/er/",currency,").rate")),CUSTOM_GASLIMIT);  
-                pendingQueries[queryId] = params(_tokenContract, _tokenType, _ratetype);
-                emit LogNewProvableQuery("Provable query was sent for Via exchange rates...");
+                //bytes32 queryId = provable_query("URL", "json(https://via-oracle.azurewebsites.net/rates/er/Via_USD_to_Via_EUR).rate",CUSTOM_GASLIMIT);
+                pendingQueries[queryId] = params(_tokenContract, _tokenType, _ratetype,"");
+                emit LogNewProvableQuery(string(abi.encodePacked("Provable query was sent for Via exchange rates for ",_currency)));
                 return queryId;
             }
             else if(_ratetype == "ir"){
-                bytes32 queryId = provable_query("URL", string(abi.encodePacked("json(https://via-oracle.azurewebsites.net/rates/ir/",currency,").rate")),CUSTOM_GASLIMIT);
-                pendingQueries[queryId] = params(_tokenContract, _tokenType, _ratetype);
-                emit LogNewProvableQuery("Provable query was sent for Via interest rates...");
+                bytes32 queryId = provable_query("URL", string(abi.encodePacked("json(https://via-oracle.azurewebsites.net/rates/ir/",_currency,").rate")),CUSTOM_GASLIMIT);
+                pendingQueries[queryId] = params(_tokenContract, _tokenType, _ratetype,"");
+                emit LogNewProvableQuery(string(abi.encodePacked("Provable query was sent for Via interest rates for ",_currency)));
                 return queryId;
-                
             }
             else if(_ratetype == "ethusd"){
                 bytes32 queryId = provable_query("URL", "json(https://api.pro.coinbase.com/products/ETH-USD/ticker).price",CUSTOM_GASLIMIT);
-                pendingQueries[queryId] = params(_tokenContract, _tokenType, _ratetype);
-                emit LogNewProvableQuery("Provable query was sent for ETH-USD, standing by for the answer...");
+                pendingQueries[queryId] = params(_tokenContract, _tokenType, _ratetype,"");
+                emit LogNewProvableQuery(string(abi.encodePacked("Provable query was sent for ETH-USD, standing by for the answer...")));
                 return queryId;
             }
         }        
     }
+
+    function setCallbackId(bytes32 _queryId, bytes32 _callbackId) external {
+        require(pendingQueries[_queryId].caller==msg.sender);
+        pendingQueries[_queryId].callbackId = _callbackId;
+    }
+
 }

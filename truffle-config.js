@@ -6,12 +6,17 @@ const fs = require('fs');
 const mnemonic = fs.readFileSync(".secret").toString().trim();
 
 module.exports = {
+    mocha: {
+        enableTimeouts: false,
+        before_timeout: 120000 
+    },
     // See <http://truffleframework.com/docs/advanced/configuration>
     // to customize your Truffle configuration!
     networks: {
         development: {
             host: "127.0.0.1", // Localhost (default: none)
             port: 8545, // Standard Ethereum port (default: none)
+            //url : "ws://127.0.0.1:8545",
             network_id: "*", // Any network (default: none)
             websockets: true,
             gas:6721975
