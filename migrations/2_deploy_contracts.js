@@ -13,11 +13,12 @@ const Token = artifacts.require('Token');
 const { deployProxy } = require('@openzeppelin/truffle-upgrades');
 
 module.exports = async function(deployer, network, accounts) {
+    await deployer.deploy(stringutils)
+    // await deployProxy(stringutils, {deployer});
+    await deployer.link(stringutils, [Bond, Cash, ViaOracle, ERC20, Token]);
 
-    await deployProxy(stringutils, {deployer});
-    await deployer.link(stringutils, [Bond, Cash, ViaOracle]);
-
-    await deployProxy(ABDKMathQuad, {deployer});
+    await deployer.deploy(ABDKMathQuad)
+    //await deployProxy(ABDKMathQuad, {deployer});
     await deployer.link(ABDKMathQuad,[Cash, Bond, ViaOracle, ERC20, Token]);
 
     /* probably dont need to deploy the oraclize contract as upgradable proxy

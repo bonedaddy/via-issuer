@@ -5,6 +5,7 @@
 pragma solidity >=0.5.0 <0.7.0;
 
 import "./interfaces/ViaFactory.sol";
+import "./interfaces/ViaInitializer.sol";
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "@openzeppelin/upgrades/contracts/upgradeability/ProxyFactory.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/ownership/Ownable.sol";
@@ -73,6 +74,8 @@ contract Factory is ViaFactory, ProxyFactory, Initializable, Ownable {
 
         // Deploy proxy
         address _issuer = deployMinimal(_target, _payload);
+        // initialize the proxy
+        ViaInitializer(_issuer).initialize(tokenName, tokenType, _owner, _oracle, _token);
         emit IssuerCreated(_issuer, tokenName, tokenType);
 
         if(tokenType == "Cash"){
