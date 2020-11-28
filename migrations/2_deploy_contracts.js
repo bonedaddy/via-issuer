@@ -23,6 +23,10 @@ module.exports = async function(deployer, network, accounts) {
 
     await deployer.deploy(Factory).then(async () => {
 
+        const factory = await Factory.deployed();
+        const oracle = await ViaOracle.deployed();
+        await oracle.initialize(factory.address);
+
         // deploy cash proxies
         const cashUSD = await deployProxy(
             Cash,
@@ -30,8 +34,8 @@ module.exports = async function(deployer, network, accounts) {
                 web3.utils.utf8ToHex("Via_USD"), // name
                 web3.utils.utf8ToHex("Cash"), // type
                 accounts[0], // owner
-                ViaOracle.address(), // oracle
-                factory.address() // factory
+                oracle.address, // oracle
+                factory.address // factory
             ],
             {
                 "deployer": deployer, 
@@ -45,8 +49,8 @@ module.exports = async function(deployer, network, accounts) {
                 web3.utils.utf8ToHex("Via_EUR"), // name
                 web3.utils.utf8ToHex("Cash"), // type
                 accounts[0], // owner
-                ViaOracle.address(), // oracle
-                factory.address() // factory
+                oracle.address, // oracle
+                factory.address // factory
             ],
             {
                 "deployer": deployer, 
@@ -60,8 +64,8 @@ module.exports = async function(deployer, network, accounts) {
                 web3.utils.utf8ToHex("Via_INR"), // name
                 web3.utils.utf8ToHex("Cash"), // type
                 accounts[0], // owner
-                ViaOracle.address(), // oracle
-                factory.address() // factory
+                oracle.address, // oracle
+                factory.address // factory
             ],
             {
                 "deployer": deployer, 
@@ -109,13 +113,9 @@ module.exports = async function(deployer, network, accounts) {
             }
         );
 
-        const factory = await Factory.deployed();
         const cash = await Cash.deployed();
         const bond = await Bond.deployed();
-        const oracle = await ViaOracle.deployed();
         const token = await Token.deployed();
-
-        await oracle.initialize(factory.address);
 
         await factory.createIssuer(cashUSD.address, web3.utils.utf8ToHex("Via_USD"), web3.utils.utf8ToHex("Cash"), oracle.address, token.address);
         await factory.createIssuer(cashEUR.address, web3.utils.utf8ToHex("Via_EUR"), web3.utils.utf8ToHex("Cash"), oracle.address, token.address);

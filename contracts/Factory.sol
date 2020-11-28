@@ -69,13 +69,9 @@ contract Factory is ViaFactory, ProxyFactory, Initializable, Ownable {
     //token issuer factory 
     function createIssuer(address _target, bytes32 tokenName, bytes32 tokenType, address _oracle, address _token) external{
         address _owner = msg.sender;
-
-        bytes memory _payload = abi.encodeWithSignature("initialize(bytes32,bytes32,address,address,address)", tokenName, tokenType, _owner, _oracle, _token);
-
-        // Deploy proxy
-        address _issuer = deployMinimal(_target, _payload);
-        // initialize the proxy
-        ViaInitializer(_issuer).initialize(tokenName, tokenType, _owner, _oracle, _token);
+        bytes memory data;
+        // Deploy proxy, no payload as we handle initialization outside of factory
+        address _issuer = deployMinimal(_target, data);
         emit IssuerCreated(_issuer, tokenName, tokenType);
 
         if(tokenType == "Cash"){
