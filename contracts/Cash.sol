@@ -62,7 +62,7 @@ contract Cash is ViaCash, ERC20, Initializable, Ownable, Pausable {
     event LogCallback(bytes32 EthXid, bytes16 EthXvalue, bytes32 txId, bytes16 ViaXvalue);
 
     //initiliaze proxies
-    function initialize(bytes32 _name, bytes32 _type, address _owner, address _oracle, address _token) public initializer{
+    function initialize(bytes32 _name, bytes32 _type, address _owner, address _oracle, address _factory) public initializer{
         Ownable.initialize(_owner);
         factory = ViaFactory(msg.sender);
         oracle = Oracle(_oracle);
